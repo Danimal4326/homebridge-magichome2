@@ -73,7 +73,12 @@ MagicHomeAccessory.prototype.sendCommand = function(command, callback) {
     var exec = require('child_process').exec;
     //var cmd =  __dirname + '/flux_led.py ' + this.ip + ' ' + command + ' -v';
     var cmd =  __dirname + '/flux_led.py ' + this.ip + ' ' + command;
-    exec(cmd, callback);
+    exec(cmd, function(err, stdout, stderr) {
+        if (err)
+        callback(true, stderr);
+        else
+        callback(false, stdout);
+    });
 };
 
 MagicHomeAccessory.prototype.getState = function (callback) {
@@ -102,22 +107,26 @@ MagicHomeAccessory.prototype.getColorFromDevice = function() {
     }.bind(this));
 };
 
-MagicHomeAccessory.prototype.setToCurrentColor = function() {
+MagicHomeAccessory.prototype.setToCurrentColor = function(callback) {
     var color = this.color;
 
     if(color.saturationv() == 0 && color.hue() == 0 && this.purewhite) {
-        this.setToWarmWhite();
+        this.setToWarmWhite(callback);
         return
     }
 
     var base = '-x ' + this.setup + ' -c ' + color.rgb().round().array();
-    this.sendCommand(base);
+    this.sendCommand(base, function() {
+        callback();
+    });
     this.log("Set Color to: %s", color.rgb().round().array());
 };
 
-MagicHomeAccessory.prototype.setToWarmWhite = function() {
+MagicHomeAccessory.prototype.setToWarmWhite = function(callback) {
     var brightness = Math.round(this.color.value());
-    this.sendCommand('-w ' + brightness);
+    this.sendCommand('-w ', function() {
+        callback();
+    });
 };
 
 // POWERSTATE
@@ -144,8 +153,8 @@ MagicHomeAccessory.prototype.getHue = function(callback) {
 
 MagicHomeAccessory.prototype.setHue = function(value, callback) {
     this.color = Color(this.color).hue(value);
-    this.setToCurrentColor();
-    callback();
+    this.setToCurrentColor(callback);
+    //callback();
 };
 
 // SATURATION
@@ -157,8 +166,8 @@ MagicHomeAccessory.prototype.getSaturation = function(callback) {
 
 MagicHomeAccessory.prototype.setSaturation = function(value, callback) {
     this.color = Color(this.color).saturationv(value);
-    this.setToCurrentColor();
-    callback();
+    this.setToCurrentColor(callback);
+    //callback();
 };
 
 // BRIGHTNESS
@@ -182,6 +191,6 @@ MagicHomeAccessory.prototype.setBrightness = function(value, callback) {
         this.color = Color(this.color).value(value);
     }
     this.log("Set Brightness to: %s", value);
-    this.setToCurrentColor();
-    callback();
+    this.setToCurrentColor(callback);
+    //callback();
 };
