@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "color": ">=3.0.0",
+    "homebridge-http-base": ">=2.1.13",
     "nopy": ""
   },
   "python": {
