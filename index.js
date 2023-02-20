@@ -1,8 +1,9 @@
 'use strict';
 
 const Color = require('color');
-const _http_base = require('homebridge-http-base');
-const Cache = _http_base.Cache;
+const Cache = require('homebridge-http-base').Cache;
+const runPython = require('nopy').spawnPython;
+const FluxLed = __dirname + "/python_modules/bin/flux_led";
 
 let Characteristic, Service, api;
 
@@ -30,12 +31,10 @@ class MagicHomeAccessory {
             on: false,
             color: Color.hsv([0, 0, 100]),
         };
-        this.cacheTime = 500;
+        this.cacheTime = 1000;
         this.statusCache = new Cache(this.cacheTime, 0);
-        this.colorCache = new Cache(this.cacheTime, 0);
 
         this.getState();
-        this.statusCache.queried();
 
         const informationService = new Service.AccessoryInformation();
 
@@ -82,31 +81,24 @@ class MagicHomeAccessory {
         this.log("Identify");
     }
 
-    async getPowerState() {
+    getPowerState() {
         
-        if (this.statusCache.shouldQuery()) {
-            await this.getState();
-            this.statusCache.queried();
-        }
-        
+        this.getState();
         return this.settings.on;
     }
 
     setPowerState(value) {
-        this.log("setPowerState: " + (value ? "ON" : "OFF"));
         if (this.statusCache.shouldQuery() || (this.settings.on != value) ) {
+            this.log("set Power: " + (value ? "ON" : "OFF"));
             this.sendCommand(value ? '--on' : '--off');
         }
         this.settings.on = (value ? true : false);
     }
 
-    async getBrightness() {
+    getBrightness() {
         var brightness;
 
-        if (this.statusCache.shouldQuery()) {
-            await this.getState();
-            this.statusCache.queried();
-        }
+        this.getState();
 
         if (this.singleChannel == true) {
             var color = this.settings.color;
@@ -120,7 +112,6 @@ class MagicHomeAccessory {
     }
 
     setBrightness(value) {
-        this.log("setBrightness: %s", value);
         var settings = this.settings;
         if (this.singleChannel == true) {
             var valueToRgb = Math.round( 10 ** (0.024064 * value ) );
@@ -131,68 +122,63 @@ class MagicHomeAccessory {
         this.setState(settings);
     }
 
-    async getHue() {
+    getHue() {
 
-        if (this.statusCache.shouldQuery()) {
-            await this.getState();
-            this.statusCache.queried();
-        }
-
+        this.getState();
         return this.settings.color.hue();
     }
 
     setHue(value) {
-        this.log("setHue: %d", value);
         var settings = this.settings;
         settings.color = Color(settings.color).hue(value);
         this.setState(settings);
     }
 
-    async getSaturation() {
-        if (this.statusCache.shouldQuery()) {
-            await this.getState();
-            this.statusCache.queried();
-        }
-        
+    getSaturation() {
+        this.getState();
         return this.settings.color.saturationv();
     }
 
     setSaturation(value) {
-        this.log("setSaturation: %s", value);
         var settings = this.settings;
         settings.color = Color(settings.color).saturationv(value);
         this.setState(settings);
     }
 
     async sendCommand(command) {
-        const exec = require('child_process').exec;
-        const execPromise = require('util').promisify(exec);
-        var cmd =  'flux_led ' + this.ip + ' ' + command;
-        var {stdout, stderr} = await execPromise(cmd);
-        //this.log("sendCommand out: %s", stdout);
-        return await stdout;
+        var out = "";
+        out = await runPython([FluxLed, this.ip, command], {interop: "buffer"}).then(( {code, stdout, stderr}) => {
+            return stdout;
+        }).catch(error => {
+            this.log(stderr)
+        });
+        //this.log("STDOUT: %s", out);
+        return out;
     }
 
     async getState() {
-        var out = await this.sendCommand('-i')
-        var settings = this.settings;
+        if (this.statusCache.shouldQuery()) {
+            var out = await this.sendCommand('-i');
+            var settings = this.settings;
 
-        var colors = out.match(/\(\d{1,3}\, \d{1,3}, \d{1,3}\)/);
-        var isOn = out.match(/\] ON /);
+            var colors = out.match(/\(\d{1,3}\, \d{1,3}, \d{1,3}\)/);
+            var isOn = out.match(/\] ON /);
 
-        if(isOn && isOn.length > 0)
-            settings.on = true;
-        else
-            settings.on = false;
+            if(isOn && isOn.length > 0)
+                settings.on = true;
+            else
+                settings.on = false;
 
-        if(colors && colors.length > 0) {
-            settings.color = Color('rgb' + colors);
+            if(colors && colors.length > 0) {
+                settings.color = Color('rgb' + colors);
+            }
+            this.settings = settings;
+            this.statusCache.queried();
         }
-
-        this.settings = settings;
     }
 
     async setState(settings) {
+        this.log("set Color: %s", settings.color.rgb());
         var color = settings.color;
         var base;
 
