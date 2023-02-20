@@ -1,5 +1,5 @@
 {
-  "pluginAlias": "homebridge-magichome2",
+  "pluginAlias": "MagicHome2",
   "pluginType": "accessory",
   "singular": false,
   "schema": {

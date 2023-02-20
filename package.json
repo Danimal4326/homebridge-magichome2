@@ -1,6 +1,6 @@
 {
   "name": "homebridge-magichome2",
-  "version": "0.4.2",
+  "version": "1.0.0",
   "description": "Magic Home WiFi plugin for homebridge",
   "license": "MIT",
   "homepage": "https://github.com/danimal4326/homebridge-magichome2#readme",
@@ -15,19 +15,24 @@
     "node": ">=0.12.0",
     "homebridge": ">=1.1.0"
   },
+  "dependencies": {
+    "color": ">=3.0.0",
+    "nopy": ""
+  },
+  "python": {
+    "execPath": "python3",
+    "dependencies": {
+      "flux-led": ">=0.28.34"
+    }
+  },
+  "scripts": {
+    "install": "npip install",
+    "nopy": "nopy",
+    "npip": "npip"
+  },
   "keywords": [
     "homebridge-plugin",
     "Flux",
-    "magic",
-    "home",
-    "wifi",
-    "zengge",
-    "led",
-    "strips",
-    "lighbulb",
-    "blub"
-  ],
-  "dependencies": {
-    "color": ">=3.0.0"
-  }
+    "lighbulb"
+  ]
 }
