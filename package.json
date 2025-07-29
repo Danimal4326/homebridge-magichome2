@@ -1,6 +1,6 @@
 {
   "name": "homebridge-magichome2",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Magic Home WiFi plugin for homebridge",
   "license": "MIT",
   "homepage": "https://github.com/danimal4326/homebridge-magichome2#readme",
@@ -16,7 +16,7 @@
     "homebridge": ">=1.1.0"
   },
   "dependencies": {
-    "color": ">=3.0.0",
+    "color": "^4.1.0",
     "homebridge-http-base": ">=2.1.13",
     "nopy": ""
   },
