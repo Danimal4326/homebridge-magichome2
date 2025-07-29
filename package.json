@@ -1,5 +1,5 @@
 {
-  "name": "homebridge-magichome2",
+  "name": "@danimal4326/homebridge-magichome2",
   "version": "1.0.1",
   "description": "Magic Home WiFi plugin for homebridge",
   "license": "MIT",
